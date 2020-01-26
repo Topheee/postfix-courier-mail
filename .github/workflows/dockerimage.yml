@@ -1,0 +1,20 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag postfix-courier-mail:0.1
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_HUB_PW }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+    - name: Push the Docker image
+      run: docker push postfix-courier-mail:0.1
+    - name: Logout of Docker Hub
+      run: docker logout
