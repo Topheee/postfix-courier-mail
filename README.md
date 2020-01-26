@@ -33,7 +33,7 @@ version: '2'
 
 services:
   mail:
-    image: postfix-courier-mail:0.1
+    image: topheee/postfix-courier-mail:0.1
     environment:
     - MAIL_DOMAIN=example.org
     - PF_MYDOMAIN=example.org
@@ -58,6 +58,8 @@ volumes:
   userdb:
 
 ```
+
 ## Notes
 
 This project is licensed under the terms of the MIT license.
+
