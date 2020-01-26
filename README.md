@@ -14,7 +14,7 @@ All postfix configuration parameters of `main.cf` (see [Postfix Configuration Pa
 
 Similarily, Courier's configuration (stored in `/etc/courier/imapd-ssl`) can be altered through `CO_`-prefixed environment variables.
 
-On startup, an account named *postmaster* with password *changeme* is created. On first startup, you **must** change this:
+On startup, an account named *postmaster* with password *changeme* is created. On first startup, you **must** change it:
 ```shell
 docker exec -it mycontainer bash
 $ userdbpw -md5 | userdb default/postmaster set systempw
@@ -22,7 +22,7 @@ $ userdbpw -md5 | userdb default/postmaster set systempw
 
 ## Persistent Data (Volumes)
 
-Emails are stored in Maildir format below `/home/vmail`. Users are stored below `/etc/courier/userdb/`. You probably want to add volumes for these two folders.
+Emails are stored in *Maildir* format below `/home/vmail`. Users are stored below `/etc/courier/userdb/`. You probably want to add volumes for these two folders.
 
 ## Basic Setup
 
@@ -36,7 +36,7 @@ services:
     image: postfix-courier-mail:0.1
     environment:
     - MAIL_DOMAIN=example.org
-	- PF_MYDOMAIN=example.org
+    - PF_MYDOMAIN=example.org
     - PF_MYHOSTNAME=example.org
     - PF_SMTP_TLS_CERT_FILE=/etc/letsencrypt/live/example.org/fullchain.pem
     - PF_SMTP_TLS_KEY_FILE=/etc/letsencrypt/live/example.org/privkey.pem
