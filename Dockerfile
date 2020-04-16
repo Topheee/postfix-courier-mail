@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-# SMTP and IMAPS
+# SMTP and IMAPS ports
 EXPOSE 25 993
 
 # *** SMTP ***
@@ -9,7 +9,9 @@ ENV MAILDIR_PATH=mail
 
 # Python3 is a recommendation of postfix (see apt-cache show postfix)
 # rsyslog is required to receive logs
-
+# the SASL packages are for authentication
+# apt-utils is necessary for the installation in Docker
+# ca-certificates installs the common internet certificate authorities necessary for TLS
 RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set-selections && \
 	echo postfix postfix/mynetworks string "127.0.0.0/8" | debconf-set-selections && \
 	echo postfix postfix/mailname string localhost.localdomain | debconf-set-selections && \
@@ -112,8 +114,8 @@ RUN postconf -e 'home_mailbox = emails/' && \
 	postconf -e 'tls_append_default_CA = no' && \
 	postconf -e 'tls_dane_digests = sha512 sha256' && \
 	postconf -e 'tls_preempt_cipherlist = yes' && \
+	# we run in chroot mode (although it is not really necessary, because Docker already does it)
 	echo 'smtp      inet  n       -       y       -       -       smtpd' >> /etc/postfix/master.cf
-# we run in chroot mode
 
 # *** SASL ***
 # based on https://wiki.debian.org/PostfixAndSASL
@@ -159,7 +161,8 @@ RUN echo tzdata tzdata/Areas select "Europe" | debconf-set-selections && \
 # courier-base seems to not respect dpkg excludes in /etc/dpkg/dpkg.cfg.d/excludes
 	mkdir -p /usr/share/man/man8/ && \
 	touch /usr/share/man/man8/deliverquota.courier.8.gz && touch /usr/share/man/man5/maildir.courier.5.gz && touch /usr/share/man/man7/maildirquota.courier.7.gz && \
-	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata gamin courier-base courier-ssl courier-imap-ssl && apt-get clean
+	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata gamin courier-base courier-ssl courier-imap-ssl && \
+	apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* ~/.cache ~/.npm
 
 # we need to turn off IMAP_TLS_REQUIRED because the `rimap` authentication module of postfix requires plaintext IMAP
 RUN mkdir "/mnt/courier-data" && mkdir "/home/$MAIL_USER/$MAILDIR_PATH" && chown "$VMAIL_UID:$VMAIL_GID" "/home/$MAIL_USER/$MAILDIR_PATH" && \
