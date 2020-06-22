@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 # SMTP and IMAPS ports
 EXPOSE 25 993
@@ -161,7 +161,7 @@ RUN echo tzdata tzdata/Areas select "Europe" | debconf-set-selections && \
 # courier-base seems to not respect dpkg excludes in /etc/dpkg/dpkg.cfg.d/excludes
 	mkdir -p /usr/share/man/man8/ && \
 	touch /usr/share/man/man8/deliverquota.courier.8.gz && touch /usr/share/man/man5/maildir.courier.5.gz && touch /usr/share/man/man7/maildirquota.courier.7.gz && \
-	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata gamin courier-base courier-ssl courier-imap-ssl && \
+	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata gamin courier-base courier-imap && \
 	apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* ~/.cache ~/.npm
 
 # we need to turn off IMAP_TLS_REQUIRED because the `rimap` authentication module of postfix requires plaintext IMAP
