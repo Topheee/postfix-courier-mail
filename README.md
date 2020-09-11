@@ -33,7 +33,7 @@ version: '2'
 
 services:
   mail:
-    image: topheee/postfix-courier-mail:0.1
+    image: topheee/postfix-courier-mail:1.0
     environment:
     - MAIL_DOMAIN=example.org
     - PF_MYDOMAIN=example.org
