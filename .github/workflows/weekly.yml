@@ -1,0 +1,23 @@
+name: Docker Image CI Weekly
+
+on:
+  schedule:
+    - cron:  '13 17 * * 3'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag topheee/postfix-courier-mail:1.0
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_HUB_PW }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+    - name: Push the Docker image
+      run: docker push topheee/postfix-courier-mail:1.0
+    - name: Logout of Docker Hub
+      run: docker logout
+
