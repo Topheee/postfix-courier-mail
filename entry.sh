@@ -62,7 +62,7 @@ fi
 
 postfix reload
 
-/etc/init.d/rsyslog start
+/usr/sbin/rsyslogd -f/etc/rsyslog.conf
 sleep 1
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start

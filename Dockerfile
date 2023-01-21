@@ -1,6 +1,6 @@
-FROM ubuntu:focal
+FROM ubuntu:22.04
 
-# SMTP and IMAPS ports
+# SMTP and IMAPS
 EXPOSE 25 993
 
 # *** SMTP ***
@@ -113,9 +113,11 @@ RUN postconf -e 'home_mailbox = emails/' && \
 	postconf -e 'swap_bangpath = no' && \
 	postconf -e 'tls_append_default_CA = no' && \
 	postconf -e 'tls_dane_digests = sha512 sha256' && \
-	postconf -e 'tls_preempt_cipherlist = yes' && \
-	# we run in chroot mode (although it is not really necessary, because Docker already does it)
-	echo 'smtp      inet  n       -       y       -       -       smtpd' >> /etc/postfix/master.cf
+	postconf -e 'tls_preempt_cipherlist = yes'
+
+# we run in chroot mode (although it is not really necessary, because Docker already does it)
+RUN sed -i '/^smtp /d' /etc/postfix/master.cf && \
+	echo 'smtp inet n - y - - smtpd' >> /etc/postfix/master.cf
 
 # *** SASL ***
 # based on https://wiki.debian.org/PostfixAndSASL
@@ -123,10 +125,14 @@ RUN postconf -e 'home_mailbox = emails/' && \
 RUN usermod -G sasl postfix && \
 	echo 'pwcheck_method: saslauthd' >> /etc/postfix/sasl/smtpd.conf && \
 	echo 'mech_list: plain login' >> /etc/postfix/sasl/smtpd.conf && \
-	sed 's/^#*START=.*/START=yes/' /etc/default/saslauthd | \
-	sed 's/^#*MECHANISMS=.*$/MECHANISMS="rimap"/' | \
-	sed 's/^#*MECH_OPTIONS=.*$/MECH_OPTIONS="localhost"/' | \
-	sed 's/^#*OPTIONS=.*$/OPTIONS="-c -m \/var\/spool\/postfix\/var\/run\/saslauthd"/' > /etc/default/saslauthd-postfix 
+	sed '/^#*START=.*/d' /etc/default/saslauthd | \
+	sed '/^#*MECHANISMS=.*/d' | \
+	sed '/^#*MECH_OPTIONS=.*/d' | \
+	sed '/^#*OPTIONS=.*/d' > /etc/default/saslauthd-postfix && \
+	echo 'START=yes' >> /etc/default/saslauthd-postfix && \
+	echo 'MECHANISMS="rimap"' >> /etc/default/saslauthd-postfix && \
+	echo 'MECH_OPTIONS="localhost"' >> /etc/default/saslauthd-postfix && \
+	echo 'OPTIONS="-c -m /var/spool/postfix/var/run/saslauthd"' >> /etc/default/saslauthd-postfix
 
 # *** IMAP(S) ***
 # see also https://help.ubuntu.com/community/PostfixCompleteVirtualMailSystemHowto
