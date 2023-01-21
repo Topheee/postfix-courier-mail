@@ -117,6 +117,7 @@ RUN postconf -e 'home_mailbox = emails/' && \
 
 # we run in chroot mode (although it is not really necessary, because Docker already does it)
 RUN sed -i '/^smtp /d' /etc/postfix/master.cf && \
+	echo 'smtp unix - - n - - smtp' >> /etc/postfix/master.cf && \
 	echo 'smtp inet n - y - - smtpd' >> /etc/postfix/master.cf
 
 # *** SASL ***
