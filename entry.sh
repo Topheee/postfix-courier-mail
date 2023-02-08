@@ -34,7 +34,8 @@ fi
 
 chmod -R 600 /etc/courier/userdb
 
-echo "$MAIL_DOMAIN" > /etc/mailname
+# now this is absolutely crazy: postfix checks the number of hard links on a file. But since Docker seems to internally use these, we must limit the amount of changes we make to the fs.
+if [ ! grep -q "$MAIL_DOMAIN" /etc/mailname ]; then echo "$MAIL_DOMAIN" > /etc/mailname; fi
 echo "$MAIL_DOMAIN" > /etc/postfix/vhosts
 # create default account
 /usr/local/bin/add_mailbox.sh postmaster
@@ -69,6 +70,9 @@ if [ ! -z "$CERTFILE" ]; then
 	ilog "building courier certificate file based on $CERTFILE, $KEYFILE and $DHFILE"
 	cat "$CERTFILE" "$KEYFILE" "$DHFILE" > $IMAPCERTFILE
 fi
+
+# clear PID files
+rm -f /var/spool/postfix/var/run/saslauthd/saslauthd.pid /var/run/courier/imapd.pid /var/run/courier/imapd-ssl.pid /var/spool/postfix/pid/master.pid
 
 postfix reload
 
