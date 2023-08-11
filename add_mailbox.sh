@@ -7,9 +7,9 @@ fi
 
 MAILADDRESS="$1@$MAIL_DOMAIN"
 
-VMAPS_FILE="$(echo $PF_VIRTUAL_MAILBOX_MAPS | cut -d: -f2)"
+VMAPS_FILE="$(echo "$PF_VIRTUAL_MAILBOX_MAPS" | cut -d: -f2)"
 
-if [ $(cat "$VMAPS_FILE" | grep -c "^$MAILADDRESS") -gt 0 ]; then
+if [ "$(cat "$VMAPS_FILE" | grep -c "^$MAILADDRESS")" -gt 0 ]; then
 	echo "INFO: skipping $MAILADDRESS, because they are already created"
 	exit 0
 fi
@@ -17,7 +17,7 @@ fi
 echo "adding $MAILADDRESS"
 
 BOX=$1
-if [ ! -z "$2" ]; then
+if [ -n "$2" ]; then
 	echo "INFO: using box $2"
 	BOX=$2
 fi

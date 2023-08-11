@@ -1,13 +1,13 @@
 #!/bin/bash
 
 ilog() {
-	echo "[INF] " $@ 1>&2
+	echo "[INF] " "$@" 1>&2
 }
 wlog() {
-	echo "[WRN] " $@ 1>&2
+	echo "[WRN] " "$@" 1>&2
 }
 elog() {
-	echo "[ERR] " $@ 1>&2
+	echo "[ERR] " "$@" 1>&2
 }
 
 # signal handler for graceful shutdown of the container
@@ -23,7 +23,7 @@ trap nice_exit INT TERM
 
 # we require an environment variable MAIL_DOMAIN to be present
 if [ -z "$MAIL_DOMAIN" ]; then
-	if [ ! -z "$PF_MYDOMAIN" ]; then
+	if [ -n "$PF_MYDOMAIN" ]; then
 		ilog "MAIL_DOMAIN is not set, using PF_MYDOMAIN ('$PF_MYDOMAIN')"
 		export MAIL_DOMAIN="$PF_MYDOMAIN"
 	else
@@ -35,7 +35,7 @@ fi
 chmod -R 600 /etc/courier/userdb
 
 # now this is absolutely crazy: postfix checks the number of hard links on a file. But since Docker seems to internally use these, we must limit the amount of changes we make to the fs.
-if [ ! grep -q "$MAIL_DOMAIN" /etc/mailname ]; then echo "$MAIL_DOMAIN" > /etc/mailname; fi
+if ! grep -q "$MAIL_DOMAIN" /etc/mailname; then echo "$MAIL_DOMAIN" > /etc/mailname; fi
 echo "$MAIL_DOMAIN" > /etc/postfix/vhosts
 # create default account
 /usr/local/bin/add_mailbox.sh postmaster
@@ -57,7 +57,7 @@ for VAR in $(env | grep '^PF_' | tr '[:upper:]' '[:lower:]'); do
 	postconf -e "$CONFVAR = $CONFVAL"
 done
 
-if [ ! -f /etc/postfix/dh1024.pem -o ! -f /etc/postfix/dh512.pem ]; then
+if [ ! -f /etc/postfix/dh1024.pem ] || [ ! -f /etc/postfix/dh512.pem ]; then
 	openssl dhparam -out /etc/postfix/dh1024.pem 1024
         openssl dhparam -out /etc/postfix/dh512.pem 512
 fi
@@ -66,7 +66,7 @@ CERTFILE="$(postconf smtp_tls_cert_file | cut -d ' ' -f3)"
 KEYFILE="$(postconf smtp_tls_key_file | cut -d ' ' -f3)"
 DHFILE='/etc/postfix/dh512.pem'
 IMAPCERTFILE='/etc/courier/imapd.pem' # default from /etc/courier/imapd-ssl
-if [ ! -z "$CERTFILE" ]; then
+if [ -n "$CERTFILE" ]; then
 	ilog "building courier certificate file based on $CERTFILE, $KEYFILE and $DHFILE"
 	cat "$CERTFILE" "$KEYFILE" "$DHFILE" > $IMAPCERTFILE
 fi
@@ -92,7 +92,7 @@ wait_and_get_socket() {
 	if [ -z "$timeout" ]; then timeout=5; fi
 
 	i=0
-	while [ ! -e "${sock_file}" -a "$i" -lt "$timeout" ]; do
+	while [ ! -e "${sock_file}" ] && [ "$i" -lt "$timeout" ]; do
 		i="$(expr "$i" '+' 1)"
 		sleep 1
 	done
@@ -113,14 +113,14 @@ POSTFIX_PID=$(wait_and_get_socket /var/spool/postfix/pid/master.pid | tr -d ' ')
 ilog "running and waiting for pids saslauthd: $SASL_PID, imapd: $IMAPD_PID, imapd_ssl: $IMAPD_SSL_PID, postfix: $POSTFIX_PID to exit..."
 
 # we cannot simply `wait` here, as it is not our child process...
-tail --pid=$SASL_PID -f /var/log/auth.log &
+tail "--pid=$SASL_PID" -f /var/log/auth.log &
 SASL_TAIL_PID="$!"
 # no idea what /var/log/btmp is, but there is no explicit logfile for imapd and imapd_ssl
-tail --pid=$IMAPD_PID -f /var/log/btmp &
+tail "--pid=$IMAPD_PID" -f /var/log/btmp &
 IMAPD_TAIL_PID="$!"
-tail --pid=$IMAPD_SSL_PID -f /var/log/syslog &
+tail "--pid=$IMAPD_SSL_PID" -f /var/log/syslog &
 IMAPD_SSL_TAIL_PID="$!"
-tail --pid=$POSTFIX_PID -f /var/log/mail.log &
+tail "--pid=$POSTFIX_PID" -f /var/log/mail.log &
 POSTFIX_TAIL_PID="$!"
 
 wait -n -p EXITED_PID "$SASL_TAIL_PID" "$IMAPD_TAIL_PID" "$IMAPD_SSL_TAIL_PID" "$POSTFIX_TAIL_PID"
